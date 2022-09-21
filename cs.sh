@@ -86,7 +86,8 @@ create_api_project() {
 }
 
 create_console_project() {
-	test_dir="${project_dir}.Test"
+    console_app="${project_dir}.ConsoleApp"
+	test_dir="${project_dir}.ConsoleApp.Test"
 
 	mkdir "$project_dir" || {
 		printf '%s\n' "$E Não foi possível criar seu modelo.$C" >&2
@@ -97,28 +98,38 @@ create_console_project() {
 		printf '%s\n' "$E Não foi possível acessar o diretório.$C" >&2
 		exit 1
 	}
-	dotnet new console -o "$project_dir" >/dev/null || {
+	dotnet new sln >/dev/null || {
 		printf '%s\n' "$E Não foi possível criar seu modelo.$C" >&2
 		rm -rf "$project_dir"
 		exit 1
 	}
+	mkdir src || {
+		printf '%s\n' "$E Não foi possível criar seu modelo.$C" >&2
+		Help
+		exit 1
+	}
+	cd src || {
+		printf '%s\n' "$E Não foi possível acessar o diretório.$C" >&2
+		exit 1
+	}
+	dotnet new console -o "$console_app" >/dev/null || {
+		printf '%s\n' "$E Não foi possível criar seu modelo.$C" >&2
+		rm -rf "$project_dir"
+		exit 1
+	}
+
 	dotnet new xunit -o "$test_dir" >/dev/null || {
 		printf '%s\n' "$E Não foi possível criar seu modelo.$C" >&2
 		rm -rf "$test_dir"
 		exit 1
 	}
 
-	cd "$test_dir" || {
-		printf '%s\n' "$E Não foi possível acessar o diretório.$C" >&2
-		exit 1
-	}
+	dotnet add "$test_dir" reference "$console_app" > /dev/null
 
-	dotnet add reference ../"$project_dir"/*.csproj >/dev/null || {
-		printf '%s\n' "$E Um erro ocorreu ao tentar adicionar a referência.$C" >&2
-		exit 1
-	}
+    cd ..
+
+	dotnet sln add ./src/**/*.csproj >/dev/null
 }
-
 # ------------------------------------PROGRAMA-------------------------------------------------------
 if [[ -z $1 ]]; then
 	printf '%s\n' "$E É necessário informar um nome para o projeto. $C" >&2
